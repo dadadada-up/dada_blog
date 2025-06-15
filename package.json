@@ -21,7 +21,8 @@
     "react-syntax-highlighter": "^15.6.1",
     "rehype-highlight": "^7.0.2",
     "rehype-raw": "^7.0.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "styled-jsx": "^5.1.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
