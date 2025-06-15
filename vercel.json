@@ -1,1 +1,1 @@
-{"buildCommand":"npm install chart.js react-chartjs-2 && npm run build","outputDirectory":".next","installCommand":"npm install","framework":"nextjs"}
+{"buildCommand":"npm install chart.js react-chartjs-2 styled-jsx && npm run build","outputDirectory":".next","installCommand":"npm install","framework":"nextjs"}
