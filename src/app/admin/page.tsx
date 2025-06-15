@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import AdminLayout from '@/components/AdminLayout';
+import AdminLayout from '../../../components/AdminLayout';
 import Link from 'next/link';
-import { getAllPosts, getAllCategories, getAllTags } from '@/lib/notion';
-import { Post, VisitStats, LikeStats, Notification } from '@/types';
+import { getAllPosts, getAllCategories, getAllTags } from '../../../lib/notion';
+import { Post, VisitStats, LikeStats, Notification } from '../../../types';
 import { format } from 'date-fns';
 import {
   Chart as ChartJS,

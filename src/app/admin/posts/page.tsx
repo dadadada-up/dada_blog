@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import AdminLayout from '@/components/AdminLayout';
+import AdminLayout from '../../../components/AdminLayout';
 import Link from 'next/link';
-import { getAllPosts } from '@/lib/notion';
-import { Post } from '@/types';
+import { getAllPosts } from '../../../lib/notion';
+import { Post } from '../../../types';
 import { format } from 'date-fns';
 import Image from 'next/image';
 

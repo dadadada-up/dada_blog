@@ -51,6 +51,9 @@ const nextConfig = {
     return config;
   },
   // 实验特性已被移除
+  
+  // 确保路径可以正确解析
+  transpilePackages: ['@components', '@lib', '@types'],
 };
 
 export default nextConfig; 
