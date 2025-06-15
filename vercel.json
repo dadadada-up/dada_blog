@@ -1,1 +1,1 @@
-{"buildCommand":"npm ci && npm install chart.js react-chartjs-2 styled-jsx caniuse-lite@latest && npm run build","outputDirectory":".next","installCommand":"npm ci","framework":"nextjs","buildTimezone":"Asia/Shanghai","buildEnvironment":{"NEXT_TELEMETRY_DISABLED":"1"}}
+{"buildCommand":"npm ci && npm run build","outputDirectory":".next","installCommand":"npm install --no-fund --no-audit","framework":"nextjs","buildTimezone":"Asia/Shanghai","buildEnvironment":{"NEXT_TELEMETRY_DISABLED":"1","NODE_OPTIONS": "--max-old-space-size=4096"}}

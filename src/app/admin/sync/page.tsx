@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import AdminLayout from '../../../components/AdminLayout';
-import { syncNotionData, getLastSyncInfo } from '../../../lib/notion';
+import AdminLayout from '@/components/AdminLayout';
+import { syncNotionData, getLastSyncInfo } from '@/lib/notion';
 
 interface SyncLog {
   date: string;

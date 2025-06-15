@@ -42,18 +42,22 @@ const nextConfig = {
         path: false,
       };
     }
-
-    // 确保正确解析caniuse-lite模块
-    config.resolve.alias = {
-      ...config.resolve.alias,
-    };
     
     return config;
   },
-  // 实验特性已被移除
   
-  // 确保路径可以正确解析
-  transpilePackages: ['@components', '@lib', '@types'],
+  // 显式添加别名配置，确保与tsconfig.json一致
+  modularizeImports: {
+    '@components/(.*)': {
+      transform: "@/components/$1",
+    },
+    '@lib/(.*)': {
+      transform: "@/lib/$1",
+    },
+    '@types/(.*)': {
+      transform: "@/types/$1",
+    }
+  }
 };
 
 export default nextConfig; 
