@@ -1,6 +1,1 @@
-{
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "installCommand": "npm install",
-  "framework": "nextjs"
-} 
+{"buildCommand":"cd dada-blog && npm install chart.js react-chartjs-2 && npm run build","outputDirectory":"dada-blog/.next","installCommand":"cd dada-blog && npm install","framework":"nextjs"}
