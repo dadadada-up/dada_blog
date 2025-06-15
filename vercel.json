@@ -1,1 +1,12 @@
-{"buildCommand":"npm ci && npm run build","outputDirectory":".next","installCommand":"npm install --no-fund --no-audit","framework":"nextjs","buildTimezone":"Asia/Shanghai","buildEnvironment":{"NEXT_TELEMETRY_DISABLED":"1","NODE_OPTIONS": "--max-old-space-size=4096"}}
+{
+  "version": 2,
+  "buildCommand": "npm ci && npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install --no-fund --no-audit",
+  "framework": "nextjs",
+  "buildTimezone": "Asia/Shanghai",
+  "buildEnvironment": {
+    "NEXT_TELEMETRY_DISABLED": "1",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  }
+}

@@ -1,17 +1,37 @@
-# 达达博客系统
+# Dada Blog
 
-基于Next.js和Notion API的静态博客系统，支持文章管理、分类归档、评论点赞等功能。
+这是一个基于Next.js和Notion API的个人博客项目。
+
+## 部署状态
+
+最后更新时间: 2024-11-01
+版本: 1.0.1
 
 ## 功能特点
 
-- 🚀 基于Next.js的静态生成，性能优异
-- 📝 使用Notion作为CMS，维护内容更便捷
-- 📊 简洁美观的管理后台
-- 🔄 支持定时/手动同步Notion数据
-- 💬 集成评论系统（基于GitHub Discussions的Giscus）
-- 👍 支持文章点赞（基于localStorage）
-- 🔍 支持文章搜索功能
-- 📱 响应式设计，移动端友好
+- 基于Next.js 15.3.3构建
+- 使用Notion API作为内容管理系统
+- 响应式设计，适配各种设备
+- 支持文章分类和标签
+- 内置管理后台
+- 访问统计和点赞功能
+
+## 部署说明
+
+本项目使用Vercel进行部署。如遇到"This deployment can not be redeployed"错误，请创建新的提交后重试。
+
+## 开发
+
+```bash
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+
+# 构建生产版本
+npm run build
+```
 
 ## 技术栈
 
