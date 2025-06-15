@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm ci && npm install chart.js react-chartjs-2 && npm run build",
+  "buildCommand": "npm ci && npm install chart.js react-chartjs-2 tailwindcss postcss autoprefixer && npm run build",
   "outputDirectory": ".next",
   "installCommand": "npm install --no-fund --no-audit",
   "framework": "nextjs"
