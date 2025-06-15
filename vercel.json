@@ -3,9 +3,5 @@
   "buildCommand": "npm ci && npm run build",
   "outputDirectory": ".next",
   "installCommand": "npm install --no-fund --no-audit",
-  "framework": "nextjs",
-  "buildEnvironment": {
-    "NEXT_TELEMETRY_DISABLED": "1",
-    "NODE_OPTIONS": "--max-old-space-size=4096"
-  }
+  "framework": "nextjs"
 }
