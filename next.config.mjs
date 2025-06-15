@@ -42,7 +42,18 @@ const nextConfig = {
         path: false,
       };
     }
+
+    // 确保正确解析caniuse-lite模块
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'caniuse-lite': require.resolve('caniuse-lite'),
+    };
+    
     return config;
+  },
+  experimental: {
+    // 启用增强的解析功能
+    esmExternals: 'loose',
   },
 };
 
