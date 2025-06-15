@@ -1,0 +1,5 @@
+这个文件是为了解决Vercel部署问题而创建的。
+当Vercel提示"This deployment can not be redeployed. Please try again from a fresh commit."时，
+需要创建一个新的提交来触发新的部署。
+
+部署时间: 2024-11-01 
