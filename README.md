@@ -66,7 +66,7 @@ NOTION_DATABASE_ID=your_notion_database_id
 ### 本地开发
 
 ```bash
-cd dada-blog && npm run dev
+npm run dev
 ```
 
 ### 博客访问地址
