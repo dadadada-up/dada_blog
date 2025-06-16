@@ -87,9 +87,13 @@ echo '{
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["empty.ts"],
+  "include": ["next-env.d.ts", "empty.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }' > tsconfig.build.json
 
