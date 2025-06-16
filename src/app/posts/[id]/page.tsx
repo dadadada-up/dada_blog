@@ -16,6 +16,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useParams } from 'next/navigation';
 import { Post, Category, Tag } from '@/types';
+import PageTracker from '@/components/PageTracker';
 
 // 从Markdown内容中提取标题生成目录
 function generateTableOfContents(markdownContent: string) {
@@ -174,6 +175,8 @@ export default function PostDetail() {
   const [loading, setLoading] = useState(true);
   const [tableOfContents, setTableOfContents] = useState<any[]>([]);
   const [recommendedPosts, setRecommendedPosts] = useState<Post[]>([]);
+  const [likes, setLikes] = useState(0);
+  const [hasLiked, setHasLiked] = useState(false);
   
   // 获取数据
   useEffect(() => {
@@ -239,10 +242,66 @@ export default function PostDetail() {
     fetchData();
   }, [postId]);
   
+  // 获取点赞数据
+  useEffect(() => {
+    async function fetchLikes() {
+      try {
+        const response = await fetch(`/api/likes?postId=${postId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setLikes(data.likes);
+          }
+        }
+      } catch (error) {
+        console.error('获取点赞数据失败:', error);
+      }
+    }
+    
+    fetchLikes();
+    
+    // 检查本地存储，判断用户是否已点赞
+    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
+    setHasLiked(!!likedPosts[postId]);
+  }, [postId]);
+  
   // 格式化日期
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '未知日期';
     return format(new Date(dateString), 'yyyy-MM-dd');
+  };
+  
+  // 处理点赞
+  const handleLike = async () => {
+    if (hasLiked) return;
+    
+    try {
+      const response = await fetch('/api/likes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          postId, 
+          postTitle: post?.title || '未知文章' 
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setLikes(data.likes);
+          setHasLiked(true);
+          
+          // 保存到本地存储
+          const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
+          likedPosts[postId] = true;
+          localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+        }
+      }
+    } catch (error) {
+      console.error('点赞失败:', error);
+    }
   };
   
   // 如果正在加载
@@ -276,6 +335,7 @@ export default function PostDetail() {
 
   return (
     <Layout>
+      <PageTracker postId={postId} postTitle={post.title} />
       <div className="flex flex-col md:flex-row gap-8">
         {/* 主内容区 */}
         <div className="md:w-3/4">
@@ -302,6 +362,16 @@ export default function PostDetail() {
               <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500 mb-8">
                 <div>📅 发布于: {formatDate(post.publishDate)}</div>
                 <div>👀 阅读: {Math.floor(Math.random() * 2000)}</div> {/* 随机值，实际应使用阅读计数 */}
+                <div className="flex items-center">
+                  <button 
+                    onClick={handleLike}
+                    disabled={hasLiked}
+                    className={`flex items-center ${hasLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+                  >
+                    {hasLiked ? '❤️' : '🤍'} 
+                    <span className="ml-1">{likes}</span>
+                  </button>
+                </div>
                 <div>
                   <span className="mr-1">🏷️ 分类:</span>
                   <Link 

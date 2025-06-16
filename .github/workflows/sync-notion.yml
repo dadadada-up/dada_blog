@@ -1,0 +1,39 @@
+name: Sync Notion Data
+
+on:
+  schedule:
+    # 每天凌晨3点运行（UTC时间，对应北京时间上午11点）
+    - cron: '0 3 * * *'
+  # 允许手动触发
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'yarn'
+          
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+        
+      - name: Sync Notion data
+        run: node scripts/sync-notion.js
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          
+      - name: Commit and push if there are changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .cache/
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-sync Notion data"
+          git push 

@@ -40,7 +40,25 @@ function getLast7Days() {
   return result;
 }
 
-// 生成模拟数据
+// 获取统计数据
+async function fetchStats() {
+  try {
+    const response = await fetch('/api/stats');
+    if (!response.ok) {
+      throw new Error(`获取统计数据失败: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('获取统计数据失败:', error);
+    return {
+      visitStats: [],
+      likeStats: [],
+      notifications: []
+    };
+  }
+}
+
+// 后备模拟数据（仅在API请求失败时使用）
 function generateMockVisitData() {
   const dates = getLast7Days();
   return dates.map(date => ({
@@ -150,10 +168,26 @@ export default function Dashboard() {
         
         setRecentPosts(sortedPosts.slice(0, 6));
         
-        // 设置模拟数据
-        setVisitStats(generateMockVisitData());
-        setLikeStats(generateMockLikeData());
-        setNotifications(generateMockNotifications());
+        // 获取真实统计数据
+        const statsData = await fetchStats();
+        
+        if (statsData.visitStats && statsData.visitStats.length > 0) {
+          setVisitStats(statsData.visitStats);
+        } else {
+          setVisitStats(generateMockVisitData());
+        }
+        
+        if (statsData.likeStats && statsData.likeStats.length > 0) {
+          setLikeStats(statsData.likeStats);
+        } else {
+          setLikeStats(generateMockLikeData());
+        }
+        
+        if (statsData.notifications && statsData.notifications.length > 0) {
+          setNotifications(statsData.notifications);
+        } else {
+          setNotifications(generateMockNotifications());
+        }
       } catch (error) {
         console.error('获取数据失败:', error);
         // 设置默认数据
@@ -163,9 +197,9 @@ export default function Dashboard() {
           totalTags: 0,
         });
         setRecentPosts([]);
-        setVisitStats([]);
-        setLikeStats([]);
-        setNotifications([]);
+        setVisitStats(generateMockVisitData());
+        setLikeStats(generateMockLikeData());
+        setNotifications(generateMockNotifications());
       } finally {
         setIsLoading(false);
       }
