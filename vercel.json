@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "npm install && npm install styled-jsx@5.0.0 caniuse-lite@1.0.30001522 --no-fund --no-audit && npx update-browserslist-db@latest && npm run build",
+  "buildCommand": "yarn && yarn add styled-jsx@5.0.0 postcss@8.4.31 --exact && yarn build",
   "outputDirectory": ".next",
-  "installCommand": "npm install",
+  "installCommand": "yarn install --frozen-lockfile",
   "framework": "nextjs"
 }

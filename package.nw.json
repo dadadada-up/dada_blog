@@ -1,0 +1,11 @@
+{
+  "name": "next-wrapper",
+  "version": "1.0.0",
+  "description": "Next.js包装器确保正确的依赖关系",
+  "dependencies": {
+    "postcss": "8.4.31"
+  },
+  "scripts": {
+    "postinstall": "node -e \"try { require('fs').cpSync('node_modules/postcss', '../next/node_modules/postcss', {recursive: true}); } catch(e) { console.error('无法复制postcss:', e); }\""
+  }
+} 

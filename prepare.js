@@ -6,6 +6,12 @@ const path = require('path');
 try {
   console.log('检查必要依赖是否已安装...');
   
+  // 检查是否使用yarn或npm
+  const hasYarnLock = fs.existsSync(path.join(process.cwd(), 'yarn.lock'));
+  const packageManager = hasYarnLock ? 'yarn' : 'npm';
+  
+  console.log(`使用包管理器: ${packageManager}`);
+  
   // 检查node_modules/tailwindcss目录是否存在
   const tailwindPath = path.join(process.cwd(), 'node_modules/tailwindcss');
   const tailwindExists = fs.existsSync(tailwindPath);
@@ -16,25 +22,50 @@ try {
   const styledJsxExists = fs.existsSync(styledJsxPath);
   const styledJsxStyleExists = fs.existsSync(styledJsxStylePath);
   
-  // 检查caniuse-lite数据是否完整
-  const caniuseBrowsersPath = path.join(process.cwd(), 'node_modules/caniuse-lite/data/browsers');
-  const caniuseBrowsersExists = fs.existsSync(caniuseBrowsersPath);
+  // 检查postcss是否正确安装
+  const postcssPath = path.join(process.cwd(), 'node_modules/postcss');
+  const postcssLibPath = path.join(postcssPath, 'lib/postcss.js');
+  const postcssExists = fs.existsSync(postcssPath) && fs.existsSync(postcssLibPath);
+  
+  // 检查node_modules/next/node_modules/postcss是否存在
+  const nextPostcssPath = path.join(process.cwd(), 'node_modules/next/node_modules/postcss');
+  const nextPostcssLibPath = path.join(process.cwd(), 'node_modules/next/node_modules/postcss/lib/postcss.js');
+  const nextPostcssExists = fs.existsSync(nextPostcssPath);
   
   // 安装缺失的依赖
-  if (!tailwindExists || !styledJsxExists || !styledJsxStyleExists || !caniuseBrowsersExists) {
+  const missingDeps = !tailwindExists || !styledJsxExists || !styledJsxStyleExists || !postcssExists;
+  if (missingDeps || !nextPostcssExists) {
     console.log('发现缺失的依赖，正在安装...');
+    
+    // 如果postcss不存在或不完整
+    if (!postcssExists) {
+      console.log('修复 postcss...');
+      if (packageManager === 'yarn') {
+        execSync('yarn add postcss@8.4.31 --exact', { stdio: 'inherit' });
+      } else {
+        execSync('npm install postcss@8.4.31 --save-exact', { stdio: 'inherit' });
+      }
+    }
     
     if (!tailwindExists) {
       console.log('安装 tailwindcss...');
-      execSync('npm install tailwindcss postcss autoprefixer --no-fund --no-audit', { stdio: 'inherit' });
+      if (packageManager === 'yarn') {
+        execSync('yarn add tailwindcss autoprefixer', { stdio: 'inherit' });
+      } else {
+        execSync('npm install tailwindcss autoprefixer', { stdio: 'inherit' });
+      }
     }
     
     if (!styledJsxExists || !styledJsxStyleExists) {
       console.log('安装 styled-jsx@5.0.0...');
-      execSync('npm install styled-jsx@5.0.0 --no-fund --no-audit', { stdio: 'inherit' });
+      if (packageManager === 'yarn') {
+        execSync('yarn add styled-jsx@5.0.0 --exact', { stdio: 'inherit' });
+      } else {
+        execSync('npm install styled-jsx@5.0.0 --save-exact', { stdio: 'inherit' });
+      }
       
-      // 强制创建必要的目录
-      if (!fs.existsSync(styledJsxStylePath)) {
+      // 尝试修复styled-jsx/style
+      if (fs.existsSync(styledJsxPath) && !fs.existsSync(styledJsxStylePath)) {
         console.log('尝试修复styled-jsx/style...');
         // 检查styled-jsx是否包含dist目录
         const distPath = path.join(styledJsxPath, 'dist');
@@ -55,16 +86,44 @@ try {
       }
     }
     
-    // 修复caniuse-lite
-    if (!caniuseBrowsersExists) {
-      console.log('修复 caniuse-lite...');
-      execSync('npm install caniuse-lite@1.0.30001522 --no-fund --no-audit', { stdio: 'inherit' });
+    // 如果next的postcss模块不存在，尝试创建符号链接
+    if (!nextPostcssExists && postcssExists) {
+      console.log('修复Next.js中的postcss依赖...');
+      const nextNodeModulesPath = path.join(process.cwd(), 'node_modules/next/node_modules');
       
-      // 确认安装后再次检查
-      if (!fs.existsSync(caniuseBrowsersPath)) {
-        console.log('尝试更新 caniuse-lite 数据...');
-        execSync('npx update-browserslist-db@latest', { stdio: 'inherit' });
-        console.log('caniuse-lite 更新完成');
+      try {
+        // 确保目录存在
+        if (!fs.existsSync(nextNodeModulesPath)) {
+          fs.mkdirSync(nextNodeModulesPath, { recursive: true });
+        }
+        
+        // 如果存在但是不完整，先删除
+        if (fs.existsSync(nextPostcssPath) && !fs.existsSync(nextPostcssLibPath)) {
+          console.log('删除不完整的postcss...');
+          fs.rmSync(nextPostcssPath, { recursive: true, force: true });
+        }
+        
+        // 创建符号链接或复制文件
+        if (!fs.existsSync(nextPostcssPath)) {
+          console.log('创建postcss符号链接...');
+          if (process.platform === 'win32') {
+            // Windows上复制整个目录
+            fs.cpSync(postcssPath, nextPostcssPath, { recursive: true });
+          } else {
+            // Unix系统创建符号链接
+            fs.symlinkSync(postcssPath, nextPostcssPath, 'dir');
+          }
+          console.log('Next.js postcss依赖修复完成');
+        }
+      } catch (linkError) {
+        console.warn('创建符号链接失败，尝试复制文件:', linkError);
+        // 如果创建符号链接失败，尝试复制文件
+        try {
+          fs.cpSync(postcssPath, nextPostcssPath, { recursive: true });
+          console.log('成功复制postcss文件到Next.js目录');
+        } catch (cpError) {
+          console.error('无法复制postcss文件:', cpError);
+        }
       }
     }
   } else {
