@@ -16,8 +16,12 @@ try {
   const styledJsxExists = fs.existsSync(styledJsxPath);
   const styledJsxStyleExists = fs.existsSync(styledJsxStylePath);
   
+  // 检查caniuse-lite数据是否完整
+  const caniuseBrowsersPath = path.join(process.cwd(), 'node_modules/caniuse-lite/data/browsers');
+  const caniuseBrowsersExists = fs.existsSync(caniuseBrowsersPath);
+  
   // 安装缺失的依赖
-  if (!tailwindExists || !styledJsxExists || !styledJsxStyleExists) {
+  if (!tailwindExists || !styledJsxExists || !styledJsxStyleExists || !caniuseBrowsersExists) {
     console.log('发现缺失的依赖，正在安装...');
     
     if (!tailwindExists) {
@@ -48,6 +52,19 @@ try {
             console.log('style.js已复制到style/index.js');
           }
         }
+      }
+    }
+    
+    // 修复caniuse-lite
+    if (!caniuseBrowsersExists) {
+      console.log('修复 caniuse-lite...');
+      execSync('npm install caniuse-lite@1.0.30001522 --no-fund --no-audit', { stdio: 'inherit' });
+      
+      // 确认安装后再次检查
+      if (!fs.existsSync(caniuseBrowsersPath)) {
+        console.log('尝试更新 caniuse-lite 数据...');
+        execSync('npx update-browserslist-db@latest', { stdio: 'inherit' });
+        console.log('caniuse-lite 更新完成');
       }
     }
   } else {
