@@ -32,8 +32,14 @@ try {
   const nextPostcssLibPath = path.join(process.cwd(), 'node_modules/next/node_modules/postcss/lib/postcss.js');
   const nextPostcssExists = fs.existsSync(nextPostcssPath);
   
+  // 检查TypeScript相关依赖是否存在
+  const typescriptPath = path.join(process.cwd(), 'node_modules/typescript');
+  const typesNodePath = path.join(process.cwd(), 'node_modules/@types/node');
+  const typescriptExists = fs.existsSync(typescriptPath);
+  const typesNodeExists = fs.existsSync(typesNodePath);
+  
   // 安装缺失的依赖
-  const missingDeps = !tailwindExists || !styledJsxExists || !styledJsxStyleExists || !postcssExists;
+  const missingDeps = !tailwindExists || !styledJsxExists || !styledJsxStyleExists || !postcssExists || !typescriptExists || !typesNodeExists;
   
   if (missingDeps || !nextPostcssExists) {
     console.log('发现缺失的依赖，正在安装...');
@@ -84,6 +90,16 @@ try {
             console.log('style.js已复制到style/index.js');
           }
         }
+      }
+    }
+    
+    // 检查并安装TypeScript相关依赖
+    if (!typescriptExists || !typesNodeExists) {
+      console.log('安装TypeScript相关依赖...');
+      if (packageManager === 'yarn') {
+        execSync('yarn add typescript@5.3.3 @types/node@20.10.5 --dev --exact', { stdio: 'inherit' });
+      } else {
+        execSync('npm install typescript@5.3.3 @types/node@20.10.5 --save-dev --save-exact', { stdio: 'inherit' });
       }
     }
     
@@ -144,6 +160,19 @@ module.exports = {
 };
 `;
     fs.writeFileSync(postcssConfigPath, postcssConfig);
+  }
+  
+  // 确保next-env.d.ts文件存在
+  const nextEnvPath = path.join(process.cwd(), 'next-env.d.ts');
+  if (!fs.existsSync(nextEnvPath)) {
+    console.log('创建next-env.d.ts...');
+    const nextEnvContent = `/// <reference types="next" />
+/// <reference types="next/types/global" />
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/basic-features/typescript for more information.`;
+    fs.writeFileSync(nextEnvPath, nextEnvContent);
+    console.log('next-env.d.ts已创建');
   }
   
   console.log('构建准备完成！');
