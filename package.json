@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node prepare.js && sh disable-typescript.sh",
-    "build": "NEXT_SKIP_TYPECHECKING=true next build",
+    "prebuild": "node prepare.js && bash disable-typescript.sh",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },

@@ -31,8 +31,6 @@ const nextConfig = {
   typescript: {
     // 在构建时不进行TypeScript类型检查
     ignoreBuildErrors: true,
-    // 完全跳过TypeScript处理
-    tsconfigPath: false,
   },
   // 添加webpack配置，解决fs模块问题
   webpack: (config, { isServer }) => {
@@ -65,11 +63,6 @@ const nextConfig = {
   compiler: {
     styledComponents: true,
   },
-
-  // 实验性地禁用类型检查
-  experimental: {
-    disableTypeInformation: true,
-  }
 };
 
 module.exports = nextConfig; 
