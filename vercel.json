@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "yarn && yarn add styled-jsx@5.0.0 postcss@8.4.31 --exact && yarn build",
+  "buildCommand": "yarn && yarn add styled-jsx@5.0.0 postcss@8.4.31 typescript@5.3.3 @types/node@20.10.5 @types/react@19.0.0 @types/react-dom@19.0.0 --exact && yarn build",
   "outputDirectory": ".next",
   "installCommand": "yarn install --frozen-lockfile",
   "framework": "nextjs"

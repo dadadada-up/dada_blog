@@ -27,13 +27,29 @@ try {
   const postcssLibPath = path.join(postcssPath, 'lib/postcss.js');
   const postcssExists = fs.existsSync(postcssPath) && fs.existsSync(postcssLibPath);
   
+  // 检查typescript是否安装
+  const typescriptPath = path.join(process.cwd(), 'node_modules/typescript');
+  const typescriptExists = fs.existsSync(typescriptPath);
+  const typesNodePath = path.join(process.cwd(), 'node_modules/@types/node');
+  const typesNodeExists = fs.existsSync(typesNodePath);
+  const typesReactPath = path.join(process.cwd(), 'node_modules/@types/react');
+  const typesReactExists = fs.existsSync(typesReactPath);
+  const typesReactDomPath = path.join(process.cwd(), 'node_modules/@types/react-dom');
+  const typesReactDomExists = fs.existsSync(typesReactDomPath);
+  
   // 检查node_modules/next/node_modules/postcss是否存在
   const nextPostcssPath = path.join(process.cwd(), 'node_modules/next/node_modules/postcss');
   const nextPostcssLibPath = path.join(process.cwd(), 'node_modules/next/node_modules/postcss/lib/postcss.js');
   const nextPostcssExists = fs.existsSync(nextPostcssPath);
   
+  // 检查是否有tsconfig.json
+  const tsconfigPath = path.join(process.cwd(), 'tsconfig.json');
+  const hasTsConfig = fs.existsSync(tsconfigPath);
+  
   // 安装缺失的依赖
-  const missingDeps = !tailwindExists || !styledJsxExists || !styledJsxStyleExists || !postcssExists;
+  const needsTypescript = hasTsConfig && (!typescriptExists || !typesNodeExists || !typesReactExists || !typesReactDomExists);
+  const missingDeps = !tailwindExists || !styledJsxExists || !styledJsxStyleExists || !postcssExists || needsTypescript;
+  
   if (missingDeps || !nextPostcssExists) {
     console.log('发现缺失的依赖，正在安装...');
     
@@ -82,6 +98,30 @@ try {
             fs.copyFileSync(distStylePath, path.join(styledJsxStylePath, 'index.js'));
             console.log('style.js已复制到style/index.js');
           }
+        }
+      }
+    }
+    
+    // 修复TypeScript相关依赖
+    if (needsTypescript) {
+      console.log('安装TypeScript相关依赖...');
+      let cmd;
+      if (packageManager === 'yarn') {
+        cmd = 'yarn add -D typescript@5.3.3 @types/node@20.10.5 @types/react@19.0.0 @types/react-dom@19.0.0 --exact';
+      } else {
+        cmd = 'npm install --save-dev typescript@5.3.3 @types/node@20.10.5 @types/react@19.0.0 @types/react-dom@19.0.0 --save-exact';
+      }
+      try {
+        execSync(cmd, { stdio: 'inherit' });
+        console.log('TypeScript相关依赖安装完成');
+      } catch (e) {
+        console.warn('安装TypeScript依赖失败，尝试另一种方法...');
+        // 创建基本的tsconfig.json
+        if (hasTsConfig) {
+          // 如果安装失败，但存在tsconfig.json，尝试创建一个空的ts文件
+          const emptyTsFile = path.join(process.cwd(), 'empty.ts');
+          fs.writeFileSync(emptyTsFile, '// 临时TypeScript文件\nexport {};\n');
+          console.log('创建了临时TypeScript文件');
         }
       }
     }
