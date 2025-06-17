@@ -108,14 +108,19 @@ async function syncNotionData() {
         // 处理Markdown内容
         let content = mdString.parent;
         
-        // 处理图片URL
-        content = content.replace(/!\[(.*?)\]\(([^)]+)\)/g, (match, alt, url) => {
-          // 修复语雀图片URL格式问题
-          if (url.startsWith('/https:/')) {
-            url = url.substring(1);
-          }
-          return `![${alt}](${url})`;
-        });
+        // 确保content不是undefined
+        if (content) {
+          // 处理图片URL
+          content = content.replace(/!\[(.*?)\]\(([^)]+)\)/g, (match, alt, url) => {
+            // 修复语雀图片URL格式问题
+            if (url.startsWith('/https:/')) {
+              url = url.substring(1);
+            }
+            return `![${alt}](${url})`;
+          });
+        } else {
+          content = ''; // 如果内容为undefined，设置为空字符串
+        }
         
         post.content = content;
       } catch (error) {
