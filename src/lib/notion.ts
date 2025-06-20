@@ -308,6 +308,14 @@ export async function getPostById(pageId: string): Promise<Post | null> {
 function formatPostFromNotion(page: any): Post {
   const properties = page.properties;
   
+  // 调试信息
+  console.log('Notion API 返回的属性结构:', JSON.stringify({
+    pageId: page.id,
+    properties: Object.keys(properties),
+    文档名称: properties['文档名称'],
+    是否精选文章: properties['是否精选文章']
+  }, null, 2));
+  
   // 处理封面图片
   let coverImage = null;
   
@@ -325,15 +333,36 @@ function formatPostFromNotion(page: any): Post {
     }
   }
   
-  // 处理精选文章字段
+  // 处理精选文章字段 - 增强健壮性
   let isFeatured = false;
-  if (properties['是否精选文章'] && properties['是否精选文章'].select) {
-    isFeatured = properties['是否精选文章'].select.name === '是';
+  const featuredField = properties['是否精选文章'];
+  if (featuredField) {
+    if (featuredField.select && featuredField.select.name === '是') {
+      isFeatured = true;
+    } else if (featuredField.rich_text && featuredField.rich_text.length > 0) {
+      // 如果是富文本字段
+      const text = featuredField.rich_text[0].plain_text;
+      isFeatured = text === '是';
+    } else if (featuredField.checkbox !== undefined) {
+      // 如果是复选框字段
+      isFeatured = featuredField.checkbox;
+    }
+  }
+  
+  // 处理标题字段 - 增强健壮性
+  let title = '无标题';
+  const titleField = properties['文档名称'] || properties['Name'] || properties['name'] || properties['标题'];
+  if (titleField) {
+    if (titleField.title && titleField.title.length > 0) {
+      title = titleField.title[0].plain_text;
+    } else if (titleField.rich_text && titleField.rich_text.length > 0) {
+      title = titleField.rich_text[0].plain_text;
+    }
   }
   
   return {
     id: page.id,
-    title: properties['文档名称']?.title?.[0]?.plain_text || '无标题',
+    title: title,
     category: properties['分类']?.select?.name || '未分类',
     tags: properties['标签']?.multi_select?.map((tag: any) => tag.name) || [],
     status: properties['状态']?.select?.name || '草稿',
