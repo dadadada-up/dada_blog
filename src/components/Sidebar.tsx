@@ -19,7 +19,7 @@ export default function Sidebar({ categories = [], tags = [], showAuthor = true 
           </h2>
           <div className="space-y-2 text-gray-600 text-sm">
             <p><strong>昵称：</strong>达达</p>
-            <p><strong>简介：</strong>资深中后端产品经理，AGI学习者/保险达人/产品设计</p>
+            <p><strong>简介：</strong>10年产品经理，AI编程・AI智能体・A资产配置</p>
             <p><strong>微信：</strong>dadadada_up</p>
             <p><strong>邮箱：</strong>dadadada_up@163.com</p>
           </div>

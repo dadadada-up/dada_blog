@@ -325,6 +325,12 @@ function formatPostFromNotion(page: any): Post {
     }
   }
   
+  // 处理精选文章字段
+  let isFeatured = false;
+  if (properties['是否精选文章'] && properties['是否精选文章'].select) {
+    isFeatured = properties['是否精选文章'].select.name === '是';
+  }
+  
   return {
     id: page.id,
     title: properties['文档名称']?.title?.[0]?.plain_text || '无标题',
@@ -336,6 +342,7 @@ function formatPostFromNotion(page: any): Post {
     updateDate: page.last_edited_time || null,
     originalUrl: properties['原文链接']?.url || null,
     coverImage: coverImage,
+    isFeatured: isFeatured,
   };
 }
 
@@ -473,6 +480,32 @@ export async function getPostsByTag(tagName: string): Promise<Post[]> {
     return posts.filter(post => post.tags.includes(tagName));
   } catch (error) {
     console.error(`获取标签 ${tagName} 的文章失败:`, error);
+    return [];
+  }
+}
+
+// 获取精选文章
+export async function getFeaturedPosts(): Promise<Post[]> {
+  // 在客户端环境下，通过API获取数据
+  if (!isServer) {
+    try {
+      const response = await fetch('/api/featured');
+      if (!response.ok) {
+        throw new Error(`API请求失败: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('获取精选文章失败:', error);
+      return [];
+    }
+  }
+  
+  // 服务器端逻辑
+  try {
+    const posts = await getAllPosts();
+    return posts.filter(post => post.isFeatured === true);
+  } catch (error) {
+    console.error('获取精选文章失败:', error);
     return [];
   }
 }

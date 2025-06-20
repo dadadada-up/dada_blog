@@ -11,6 +11,7 @@ export interface Post {
   content?: string;
   excerpt?: string;
   coverImage?: string; // 封面图片URL
+  isFeatured?: boolean; // 是否精选文章
 }
 
 export interface Category {
