@@ -15,14 +15,21 @@ const isServer = typeof window === 'undefined';
 // Notion 客户端初始化 - 仅在服务器端
 let notionClient: any = null;
 let n2m: any = null;
+let isInitialized = false;
 
-// 异步初始化服务器端资源
-if (isServer) {
-  // 使用动态导入代替require
-  Promise.all([
-    import('fs'),
-    import('path')
-  ]).then(([fsModule, pathModule]) => {
+// 同步初始化服务器端资源
+async function initializeServerResources() {
+  if (!isServer || isInitialized) {
+    return;
+  }
+  
+  try {
+    // 动态导入文件系统模块
+    const [fsModule, pathModule] = await Promise.all([
+      import('fs'),
+      import('path')
+    ]);
+    
     fs = fsModule.default;
     path = pathModule.default;
     CACHE_DIR = path.join(process.cwd(), '.cache');
@@ -30,15 +37,35 @@ if (isServer) {
     LAST_SYNC_FILE = path.join(CACHE_DIR, 'last_sync.json');
     
     // 初始化Notion客户端
-    notionClient = new Client({
-      auth: process.env.NOTION_API_KEY,
-    });
+    if (process.env.NOTION_API_KEY) {
+      notionClient = new Client({
+        auth: process.env.NOTION_API_KEY,
+      });
+      
+      // 转换成 Markdown 工具
+      n2m = new NotionToMarkdown({ notionClient });
+      
+      console.log('Notion客户端初始化成功');
+    } else {
+      console.error('NOTION_API_KEY 环境变量未设置');
+    }
     
-    // 转换成 Markdown 工具
-    n2m = new NotionToMarkdown({ notionClient });
-  }).catch(err => {
+    isInitialized = true;
+  } catch (err) {
     console.error('初始化服务器端资源失败:', err);
-  });
+    throw err;
+  }
+}
+
+// 确保初始化完成的辅助函数
+async function ensureInitialized() {
+  if (isServer && !isInitialized) {
+    await initializeServerResources();
+  }
+  
+  if (isServer && !notionClient) {
+    throw new Error('Notion客户端初始化失败，请检查NOTION_API_KEY环境变量');
+  }
 }
 
 // 内存缓存
@@ -149,19 +176,25 @@ export async function getAllPosts(useCache = true): Promise<Post[]> {
   }
   
   // 服务器端逻辑
-  // 如果启用缓存且缓存存在，则使用缓存数据
-  if (useCache) {
-    const cachedPosts = getPostsFromCache();
-    if (cachedPosts.length > 0) {
-      return cachedPosts;
-    }
-  }
-
   try {
+    // 确保Notion客户端已初始化
+    await ensureInitialized();
+    
+    // 如果启用缓存且缓存存在，则使用缓存数据
+    if (useCache) {
+      const cachedPosts = getPostsFromCache();
+      if (cachedPosts.length > 0) {
+        console.log(`从缓存获取到 ${cachedPosts.length} 篇文章`);
+        return cachedPosts;
+      }
+    }
+
     const databaseId = process.env.NOTION_DATABASE_ID;
     if (!databaseId) {
       throw new Error('NOTION_DATABASE_ID 环境变量未设置');
     }
+    
+    console.log('正在从Notion获取文章数据...');
     
     const response = await notionClient.databases.query({
       database_id: databaseId,
@@ -179,9 +212,13 @@ export async function getAllPosts(useCache = true): Promise<Post[]> {
       ],
     });
 
+    console.log(`从Notion获取到 ${response.results.length} 条记录`);
+
     const posts = response.results.map((page: any) => {
       return formatPostFromNotion(page);
     });
+
+    console.log(`成功格式化 ${posts.length} 篇文章`);
 
     // 保存到缓存
     savePostsToCache(posts);
@@ -202,8 +239,14 @@ export async function getAllPosts(useCache = true): Promise<Post[]> {
       message: `同步失败: ${error instanceof Error ? error.message : String(error)}`
     });
     
-    // 如果API调用失败，尝试使用缓存数据
-    return getPostsFromCache();
+    // 失败时尝试返回缓存数据
+    const cachedPosts = getPostsFromCache();
+    if (cachedPosts.length > 0) {
+      console.log('API调用失败，返回缓存数据');
+      return cachedPosts;
+    }
+    
+    return [];
   }
 }
 
@@ -309,12 +352,8 @@ function formatPostFromNotion(page: any): Post {
   const properties = page.properties;
   
   // 调试信息
-  console.log('Notion API 返回的属性结构:', JSON.stringify({
-    pageId: page.id,
-    properties: Object.keys(properties),
-    文档名称: properties['文档名称'],
-    是否精选文章: properties['是否精选文章']
-  }, null, 2));
+  console.log('正在格式化文章，页面ID:', page.id);
+  console.log('Notion属性键值:', Object.keys(properties));
   
   // 处理封面图片
   let coverImage = null;
@@ -332,26 +371,11 @@ function formatPostFromNotion(page: any): Post {
       coverImage = coverFile.file.url;
     }
   }
-  
-  // 处理精选文章字段 - 增强健壮性
-  let isFeatured = false;
-  const featuredField = properties['是否精选文章'];
-  if (featuredField) {
-    if (featuredField.select && featuredField.select.name === '是') {
-      isFeatured = true;
-    } else if (featuredField.rich_text && featuredField.rich_text.length > 0) {
-      // 如果是富文本字段
-      const text = featuredField.rich_text[0].plain_text;
-      isFeatured = text === '是';
-    } else if (featuredField.checkbox !== undefined) {
-      // 如果是复选框字段
-      isFeatured = featuredField.checkbox;
-    }
-  }
-  
-  // 处理标题字段 - 增强健壮性
+
+  // 处理标题字段 - 增强健壮性，支持多种可能的字段名
   let title = '无标题';
-  const titleField = properties['文档名称'] || properties['Name'] || properties['name'] || properties['标题'];
+  const titleField = properties['文档名称'] || properties['Name'] || properties['name'] || properties['标题'] || properties['Title'];
+  
   if (titleField) {
     if (titleField.title && titleField.title.length > 0) {
       title = titleField.title[0].plain_text;
@@ -360,7 +384,37 @@ function formatPostFromNotion(page: any): Post {
     }
   }
   
-  return {
+  console.log('文章标题:', title);
+
+  // 处理精选文章字段 - 增强健壮性，支持多种字段类型
+  let isFeatured = false;
+  const featuredField = properties['是否精选文章'] || properties['精选'] || properties['Featured'];
+  
+  if (featuredField) {
+    // 处理 select 类型字段
+    if (featuredField.select && featuredField.select.name) {
+      const selectValue = featuredField.select.name.toLowerCase();
+      isFeatured = selectValue === '是' || selectValue === 'yes' || selectValue === 'true';
+    } 
+    // 处理 checkbox 类型字段
+    else if (featuredField.checkbox !== undefined) {
+      isFeatured = featuredField.checkbox;
+    }
+    // 处理 rich_text 类型字段
+    else if (featuredField.rich_text && featuredField.rich_text.length > 0) {
+      const text = featuredField.rich_text[0].plain_text.toLowerCase();
+      isFeatured = text === '是' || text === 'yes' || text === 'true';
+    }
+    // 处理 title 类型字段
+    else if (featuredField.title && featuredField.title.length > 0) {
+      const text = featuredField.title[0].plain_text.toLowerCase();
+      isFeatured = text === '是' || text === 'yes' || text === 'true';
+    }
+  }
+  
+  console.log('是否精选:', isFeatured);
+
+  const result = {
     id: page.id,
     title: title,
     category: properties['分类']?.select?.name || '未分类',
@@ -373,6 +427,15 @@ function formatPostFromNotion(page: any): Post {
     coverImage: coverImage,
     isFeatured: isFeatured,
   };
+  
+  console.log('格式化完成的文章:', {
+    id: result.id,
+    title: result.title,
+    isFeatured: result.isFeatured,
+    category: result.category
+  });
+  
+  return result;
 }
 
 // 获取所有分类
@@ -479,6 +542,7 @@ export async function getPostsByCategory(categoryName: string): Promise<Post[]> 
   
   // 服务器端逻辑
   try {
+    await ensureInitialized();
     const posts = await getAllPosts();
     return posts.filter(post => post.category === categoryName);
   } catch (error) {
@@ -505,6 +569,7 @@ export async function getPostsByTag(tagName: string): Promise<Post[]> {
   
   // 服务器端逻辑
   try {
+    await ensureInitialized();
     const posts = await getAllPosts();
     return posts.filter(post => post.tags.includes(tagName));
   } catch (error) {
@@ -531,8 +596,11 @@ export async function getFeaturedPosts(): Promise<Post[]> {
   
   // 服务器端逻辑
   try {
+    await ensureInitialized();
     const posts = await getAllPosts();
-    return posts.filter(post => post.isFeatured === true);
+    const featuredPosts = posts.filter(post => post.isFeatured === true);
+    console.log(`找到 ${featuredPosts.length} 篇精选文章`);
+    return featuredPosts;
   } catch (error) {
     console.error('获取精选文章失败:', error);
     return [];
