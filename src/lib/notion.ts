@@ -268,6 +268,9 @@ export async function getPostById(pageId: string): Promise<Post | null> {
   
   // 服务器端逻辑
   try {
+    // 确保Notion客户端已初始化
+    await ensureInitialized();
+    
     // 先从缓存检查是否有该文章
     const cachedPosts = getPostsFromCache();
     const cachedPost = cachedPosts.find(post => post.id === pageId);

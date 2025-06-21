@@ -25,8 +25,73 @@ const n2m = new NotionToMarkdown({ notionClient });
 function formatPostFromNotion(page) {
   const properties = page.properties;
   
-  // 获取标题
-  const title = properties.标题?.title?.[0]?.plain_text || '无标题';
+  // 调试信息
+  console.log('正在格式化文章，页面ID:', page.id);
+  console.log('Notion属性键值:', Object.keys(properties));
+  
+  // 处理标题字段 - 增强健壮性，支持多种可能的字段名
+  let title = '无标题';
+  const titleField = properties['文档名称'] || properties['Name'] || properties['name'] || properties['标题'] || properties['Title'];
+  
+  if (titleField) {
+    if (titleField.title && titleField.title.length > 0) {
+      title = titleField.title[0].plain_text;
+    } else if (titleField.rich_text && titleField.rich_text.length > 0) {
+      title = titleField.rich_text[0].plain_text;
+    }
+  }
+  
+  console.log('文章标题:', title);
+
+  // 处理精选文章字段 - 增强健壮性，支持多种字段类型
+  let isFeatured = false;
+  const featuredField = properties['是否精选文章'] || properties['精选'] || properties['Featured'];
+  
+  if (featuredField) {
+    // 处理 select 类型字段
+    if (featuredField.select && featuredField.select.name) {
+      const selectValue = featuredField.select.name.toLowerCase();
+      isFeatured = selectValue === '是' || selectValue === 'yes' || selectValue === 'true';
+    } 
+    // 处理 checkbox 类型字段
+    else if (featuredField.checkbox !== undefined) {
+      isFeatured = featuredField.checkbox;
+    }
+    // 处理 rich_text 类型字段
+    else if (featuredField.rich_text && featuredField.rich_text.length > 0) {
+      const text = featuredField.rich_text[0].plain_text.toLowerCase();
+      isFeatured = text === '是' || text === 'yes' || text === 'true';
+    }
+    // 处理 title 类型字段
+    else if (featuredField.title && featuredField.title.length > 0) {
+      const text = featuredField.title[0].plain_text.toLowerCase();
+      isFeatured = text === '是' || text === 'yes' || text === 'true';
+    }
+  }
+  
+  console.log('是否精选:', isFeatured);
+  
+  // 处理封面图片
+  let coverImage = null;
+  
+  // 检查是否有封面字段
+  if (properties['封面'] && properties['封面'].files && properties['封面'].files.length > 0) {
+    const coverFile = properties['封面'].files[0];
+    
+    // 处理外部URL类型的封面
+    if (coverFile.type === 'external' && coverFile.external) {
+      coverImage = coverFile.external.url;
+    }
+    // 处理Notion内部文件类型的封面
+    else if (coverFile.type === 'file' && coverFile.file) {
+      coverImage = coverFile.file.url;
+    }
+  }
+  
+  // 如果properties中没有封面，检查page层级的cover
+  if (!coverImage) {
+    coverImage = page.cover?.external?.url || page.cover?.file?.url || null;
+  }
   
   // 获取分类
   const category = properties.分类?.select?.name || '未分类';
@@ -37,25 +102,30 @@ function formatPostFromNotion(page) {
   // 获取状态
   const status = properties.状态?.select?.name || '草稿';
   
-  // 获取作者
-  const author = properties.作者?.rich_text?.[0]?.plain_text || '匿名';
+  // 获取作者 - 支持多种字段类型
+  let author = 'dada'; // 默认作者
+  const authorField = properties.作者 || properties.Author;
+  if (authorField) {
+    if (authorField.rich_text && authorField.rich_text.length > 0) {
+      author = authorField.rich_text[0].plain_text;
+    } else if (authorField.select && authorField.select.name) {
+      author = authorField.select.name;
+    }
+  }
   
   // 获取发布日期
   const publishDate = properties.发布日期?.date?.start || null;
   
-  // 获取更新日期
-  const updateDate = properties.更新日期?.date?.start || null;
+  // 获取更新日期 - 优先使用page的last_edited_time
+  const updateDate = page.last_edited_time || properties.更新日期?.date?.start || null;
   
   // 获取原文链接
   const originalUrl = properties.原文链接?.url || null;
   
-  // 获取封面图片
-  const coverImage = page.cover?.external?.url || page.cover?.file?.url || null;
-  
   // 获取摘要
   const excerpt = properties.摘要?.rich_text?.[0]?.plain_text || '';
   
-  return {
+  const result = {
     id: page.id,
     title,
     category,
@@ -66,8 +136,18 @@ function formatPostFromNotion(page) {
     updateDate,
     originalUrl,
     coverImage,
+    isFeatured,
     excerpt,
   };
+  
+  console.log('格式化完成的文章:', {
+    id: result.id,
+    title: result.title,
+    isFeatured: result.isFeatured,
+    category: result.category
+  });
+  
+  return result;
 }
 
 async function syncNotionData() {
