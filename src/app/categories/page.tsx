@@ -13,7 +13,7 @@ export default async function Categories() {
       <div className="flex flex-col md:flex-row gap-8">
         {/* 主内容区 */}
         <div className="md:w-3/4">
-          <h1 className="text-3xl font-bold mb-8 flex items-center">
+          <h1 className="text-3xl font-bold mb-8 flex items-center text-gray-900 dark:text-gray-100">
             <span className="mr-2">📚</span> 全部分类
           </h1>
 
@@ -23,17 +23,17 @@ export default async function Categories() {
                 <Link
                   key={category.name}
                   href={`/categories/${encodeURIComponent(category.name)}`}
-                  className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
                 >
-                  <div className="font-medium text-lg text-gray-800 flex justify-between items-center">
+                  <div className="font-medium text-lg text-gray-800 dark:text-gray-200 flex justify-between items-center">
                     <span>{category.name}</span>
-                    <span className="text-sm text-gray-500">({category.count})</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">({category.count})</span>
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center text-gray-500 dark:text-gray-400">
               暂无分类，请先同步Notion数据
             </div>
           )}

@@ -17,6 +17,9 @@ import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useParams } from 'next/navigation';
 import { Post, Category, Tag } from '@/types';
 import PageTracker from '@/components/PageTracker';
+import OptimizedImage from '@/components/OptimizedImage';
+import ShareButton from '@/components/ShareButton';
+import MermaidBlock from '@/components/MermaidBlock';
 
 // 从Markdown内容中提取标题生成目录
 function generateTableOfContents(markdownContent: string) {
@@ -45,85 +48,15 @@ function generateTableOfContents(markdownContent: string) {
   return headings;
 }
 
-// 自定义图片组件
+// 自定义图片组件 - 使用优化的图片组件
 const CustomImage = (props: any) => {
-  const [error, setError] = useState(false);
-  
-  // 增强图片URL处理逻辑
-  const processImageSrc = (url: string): string => {
-    if (!url) return '';
-    
-    try {
-      // 处理相对路径
-      if (!url.startsWith('http') && !url.startsWith('/')) {
-        return `/${url}`;
-      }
-      
-      // 修复语雀图片URL格式问题
-      if (url.startsWith('/https:/')) {
-        return url.substring(1);
-      }
-      
-      // 处理语雀图片URL
-      if (url.includes('cdn.nlark.com') || url.includes('yuque')) {
-        // 确保URL格式正确
-        if (url.indexOf('https:/') === 0 && url.indexOf('https://') !== 0) {
-          return url.replace('https:/', 'https://');
-        }
-        
-        // 使用图片代理服务解决跨域问题
-        // 注意：这里使用免费的图片代理服务，可能有流量限制
-        // 生产环境建议使用自己的代理服务
-        return `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
-      }
-      
-      // 处理SVG图片
-      if (url.endsWith('.svg')) {
-        // 确保SVG URL正确
-        if (url.includes('github') || url.includes('raw.githubusercontent.com')) {
-          return url;
-        }
-      }
-      
-      // 处理特定格式的图片ID
-      if (url.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)) {
-        // 可能是Notion或其他平台的图片ID
-        if (!url.startsWith('http')) {
-          return `https://www.notion.so/image/${encodeURIComponent(url)}`;
-        }
-      }
-      
-      return url;
-    } catch (e) {
-      console.error('图片URL处理错误:', e);
-      return url; // 出错时返回原始URL
-    }
-  };
-  
-  const imgSrc = processImageSrc(props.src);
-  
-  // 图片加载失败显示占位符
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center border border-gray-300 rounded-lg p-4 my-6 bg-gray-50 text-gray-500">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        <span>图片加载失败</span>
-        <span className="text-xs mt-1">{props.alt || '无法显示图片'}</span>
-        <span className="text-xs mt-1 text-gray-400 break-all">{props.src}</span>
-      </div>
-    );
-  }
-  
-  // 正常显示图片
   return (
-    <img
-      src={imgSrc}
+    <OptimizedImage
+      src={props.src}
       alt={props.alt || ''}
-      className="max-w-full h-auto rounded-lg shadow-md my-6"
-      loading="lazy"
-      onError={() => setError(true)}
+      width={800}
+      height={600}
+      className="my-6 shadow-md"
     />
   );
 };
@@ -147,7 +80,7 @@ const CodeBlock = ({ language, children }: { language: string, children: string 
       <div className="absolute right-2 top-2 z-10">
         <button
           onClick={handleCopy}
-          className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 py-1 rounded transition-colors"
+          className="bg-gray-700 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-500 text-white text-xs px-2 py-1 rounded transition-colors"
           title="复制代码"
         >
           {copied ? '已复制!' : '复制'}
@@ -158,6 +91,9 @@ const CodeBlock = ({ language, children }: { language: string, children: string 
         language={language}
         PreTag="div"
         className="rounded-md my-4"
+        customStyle={{
+          backgroundColor: 'var(--tw-bg-opacity)' // 让背景色适应主题
+        }}
       >
         {children}
       </SyntaxHighlighter>
@@ -339,65 +275,69 @@ export default function PostDetail() {
       <div className="flex flex-col md:flex-row gap-8">
         {/* 主内容区 */}
         <div className="md:w-3/4">
-          <article className="bg-white rounded-lg shadow-md overflow-hidden">
+          <article className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
             <div className="p-6 md:p-8">
               {/* 封面图片 */}
               {post.coverImage && (
                 <div className="mb-6 -mx-8 -mt-8">
-                  <img 
-                    src={post.coverImage} 
-                    alt={`${post.title} 封面`} 
+                  <OptimizedImage
+                    src={post.coverImage}
+                    alt={`${post.title} 封面`}
+                    width={1200}
+                    height={400}
+                    priority={true}
                     className="w-full h-64 object-cover"
-                    onError={(e) => {
-                      // 图片加载失败时隐藏元素
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
                   />
                 </div>
               )}
               
-              <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
+              <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-gray-100">{post.title}</h1>
               
               {/* 文章信息 */}
-              <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500 mb-8">
-                <div>📅 发布于: {formatDate(post.publishDate)}</div>
-                <div>👀 阅读: {Math.floor(Math.random() * 2000)}</div> {/* 随机值，实际应使用阅读计数 */}
-                <div className="flex items-center">
-                  <button 
-                    onClick={handleLike}
-                    disabled={hasLiked}
-                    className={`flex items-center ${hasLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
-                  >
-                    {hasLiked ? '❤️' : '🤍'} 
-                    <span className="ml-1">{likes}</span>
-                  </button>
-                </div>
-                <div>
-                  <span className="mr-1">🏷️ 分类:</span>
-                  <Link 
-                    href={`/categories/${encodeURIComponent(post.category)}`}
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    {post.category}
-                  </Link>
-                </div>
-                {post.tags && post.tags.length > 0 && (
-                  <div className="flex flex-wrap items-center">
-                    <span className="mr-1">#标签:</span>
-                    {post.tags.map((tag, index) => (
-                      <Link
-                        key={tag}
-                        href={`/tags/${encodeURIComponent(tag)}`}
-                        className="text-blue-600 hover:text-blue-800 mr-2"
-                      >
-                        {tag}{index < post.tags.length - 1 ? ',' : ''}
-                      </Link>
-                    ))}
+              <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400 mb-8">
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  <div>📅 发布于: {formatDate(post.publishDate)}</div>
+                  <div>👀 阅读: {Math.floor(Math.random() * 2000)}</div> {/* 随机值，实际应使用阅读计数 */}
+                  <div className="flex items-center">
+                    <button 
+                      onClick={handleLike}
+                      disabled={hasLiked}
+                      className={`flex items-center ${hasLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+                    >
+                      {hasLiked ? '❤️' : '🤍'} 
+                      <span className="ml-1">{likes}</span>
+                    </button>
                   </div>
-                )}
+                  <div>
+                    <span className="mr-1">🏷️ 分类:</span>
+                    <Link 
+                      href={`/categories/${encodeURIComponent(post.category)}`}
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                    >
+                      {post.category}
+                    </Link>
+                  </div>
+                  {post.tags && post.tags.length > 0 && (
+                    <div className="flex flex-wrap items-center">
+                      <span className="mr-1">#标签:</span>
+                      {post.tags.map((tag, index) => (
+                        <Link
+                          key={tag}
+                          href={`/tags/${encodeURIComponent(tag)}`}
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mr-2"
+                        >
+                          {tag}{index < post.tags.length - 1 ? ',' : ''}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                {/* 分享按钮 */}
+                <ShareButton title={post.title} />
               </div>
               
-              <hr className="my-6" />
+              <hr className="my-6 border-gray-200 dark:border-gray-700" />
               
               {/* 文章内容 */}
               <div className="prose prose-lg prose-blue max-w-none prose-headings:text-blue-700 prose-a:text-blue-600 prose-strong:font-bold prose-strong:text-gray-700 prose-li:my-1">
@@ -414,7 +354,7 @@ export default function PostDetail() {
                               .replace(/[^\w\u4e00-\u9fa5\s]/g, '')
                               .replace(/\s+/g, '-')
                           : '';
-                        return <h1 id={slug} className="text-3xl font-bold border-b pb-2 mb-6" {...props}>{children}</h1>;
+                        return <h1 id={slug} className="text-3xl font-bold border-b border-gray-200 dark:border-gray-700 pb-2 mb-6 text-gray-900 dark:text-gray-100" {...props}>{children}</h1>;
                       },
                       h2: ({node, children, ...props}) => {
                         const slug = children
@@ -423,7 +363,7 @@ export default function PostDetail() {
                               .replace(/[^\w\u4e00-\u9fa5\s]/g, '')
                               .replace(/\s+/g, '-')
                           : '';
-                        return <h2 id={slug} className="text-2xl font-bold mt-8 mb-4" {...props}>{children}</h2>;
+                        return <h2 id={slug} className="text-2xl font-bold mt-8 mb-4 text-gray-900 dark:text-gray-100" {...props}>{children}</h2>;
                       },
                       h3: ({node, children, ...props}) => {
                         const slug = children
@@ -432,7 +372,7 @@ export default function PostDetail() {
                               .replace(/[^\w\u4e00-\u9fa5\s]/g, '')
                               .replace(/\s+/g, '-')
                           : '';
-                        return <h3 id={slug} className="text-xl font-bold mt-6 mb-3" {...props}>{children}</h3>;
+                        return <h3 id={slug} className="text-xl font-bold mt-6 mb-3 text-gray-900 dark:text-gray-100" {...props}>{children}</h3>;
                       },
                       a: ({node, href, ...props}) => {
                         // 处理链接URL
@@ -440,11 +380,11 @@ export default function PostDetail() {
                         if (href && href.startsWith('/https:/')) {
                           processedHref = href.substring(1);
                         }
-                        return <a href={processedHref} className="text-blue-600 hover:text-blue-800 no-underline hover:underline" target="_blank" rel="noopener noreferrer" {...props} />;
+                        return <a href={processedHref} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 no-underline hover:underline" target="_blank" rel="noopener noreferrer" {...props} />;
                       },
-                      ul: ({node, ...props}) => <ul className="list-disc pl-6 my-4" {...props} />,
-                      ol: ({node, ...props}) => <ol className="list-decimal pl-6 my-4" {...props} />,
-                      li: ({node, ...props}) => <li className="mb-2" {...props} />,
+                      ul: ({node, ...props}) => <ul className="list-disc pl-6 my-4 text-gray-900 dark:text-gray-100" {...props} />,
+                      ol: ({node, ...props}) => <ol className="list-decimal pl-6 my-4 text-gray-900 dark:text-gray-100" {...props} />,
+                      li: ({node, ...props}) => <li className="mb-2 text-gray-900 dark:text-gray-100" {...props} />,
                       p: ({node, children, ...props}) => {
                         // 检查是否包含图片元素
                         const hasImage = React.Children.toArray(children).some(
@@ -462,32 +402,39 @@ export default function PostDetail() {
                         }
                         
                         // 正常的段落渲染
-                        return <p className="my-4 leading-relaxed" {...props}>{children}</p>;
+                        return <p className="my-4 leading-relaxed text-gray-900 dark:text-gray-100" {...props}>{children}</p>;
                       },
                       blockquote: ({node, ...props}) => (
-                        <blockquote className="border-l-4 border-blue-500 pl-4 py-2 my-4 bg-gray-50 italic" {...props} />
+                        <blockquote className="border-l-4 border-blue-500 dark:border-blue-400 pl-4 py-2 my-4 bg-gray-50 dark:bg-gray-700 italic text-gray-900 dark:text-gray-100" {...props} />
                       ),
                       table: ({node, ...props}) => (
                         <div className="overflow-x-auto my-6">
-                          <table className="min-w-full border-collapse border border-gray-300" {...props} />
+                          <table className="min-w-full border-collapse border border-gray-300 dark:border-gray-600" {...props} />
                         </div>
                       ),
                       th: ({node, ...props}) => (
-                        <th className="border border-gray-300 bg-gray-100 px-4 py-2 text-left" {...props} />
+                        <th className="border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-4 py-2 text-left text-gray-900 dark:text-gray-100" {...props} />
                       ),
                       td: ({node, ...props}) => (
-                        <td className="border border-gray-300 px-4 py-2" {...props} />
+                        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-900 dark:text-gray-100" {...props} />
                       ),
                       code: ({node, className, children, ...props}) => {
                         // 内联代码
                         if (!className) {
-                          return <code className="bg-gray-100 px-1 py-0.5 rounded text-red-600" {...props}>{children}</code>;
+                          return <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-red-600 dark:text-red-400" {...props}>{children}</code>;
                         }
                         // 代码块
                         const match = /language-(\w+)/.exec(className || '');
                         const language = match ? match[1] : '';
+                        const codeContent = String(children).replace(/\n$/, '');
+                        
+                        // 检查是否是Mermaid图表
+                        if (language === 'mermaid') {
+                          return <MermaidBlock code={codeContent} />;
+                        }
+                        
                         return (
-                          <CodeBlock language={language} children={String(children).replace(/\n$/, '')} />
+                          <CodeBlock language={language} children={codeContent} />
                         );
                       },
                       // 不直接渲染pre标签，因为SyntaxHighlighter会处理
@@ -501,7 +448,7 @@ export default function PostDetail() {
                 )}
               </div>
               
-              <hr className="my-8" />
+              <hr className="my-8 border-gray-200 dark:border-gray-700" />
               
               {/* 互动按钮 */}
               <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -514,27 +461,27 @@ export default function PostDetail() {
               
               {/* 评论区 */}
               <div className="mt-8">
-                <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                  <p className="text-gray-600 text-center">评论功能暂未开启，敬请期待</p>
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+                  <p className="text-gray-600 dark:text-gray-300 text-center">评论功能暂未开启，敬请期待</p>
                 </div>
               </div>
               
               {/* 推荐文章 */}
               {recommendedPosts.length > 0 && (
                 <div className="mt-8">
-                  <h3 className="text-xl font-bold mb-4">📚 相关文章推荐</h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <ul className="divide-y divide-gray-200">
+                  <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">📚 相关文章推荐</h3>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <ul className="divide-y divide-gray-200 dark:divide-gray-600">
                       {recommendedPosts.map(post => (
                         <li key={post.id} className="py-3">
                           <Link 
                             href={`/posts/${post.id}`} 
-                            className="flex items-start hover:text-blue-600"
+                            className="flex items-start hover:text-blue-600 dark:hover:text-blue-400 text-gray-900 dark:text-gray-100"
                           >
-                            <span className="text-gray-400 mr-2">•</span>
+                            <span className="text-gray-400 dark:text-gray-500 mr-2">•</span>
                             <div>
                               <span className="font-medium">{post.title}</span>
-                              <div className="text-xs text-gray-500 mt-1">
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 {post.category} · {formatDate(post.publishDate)}
                               </div>
                             </div>

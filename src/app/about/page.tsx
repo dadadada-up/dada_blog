@@ -83,7 +83,7 @@ export default async function About() {
       <div className="flex flex-col md:flex-row gap-8">
         {/* 主内容区 */}
         <div className="md:w-3/4">
-          <div className="bg-white rounded-lg shadow p-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
             <article className="prose prose-lg prose-blue max-w-none prose-headings:text-blue-700 prose-a:text-blue-600 prose-strong:font-bold prose-strong:text-gray-700 prose-li:my-1">
               <ReactMarkdown 
                 components={{

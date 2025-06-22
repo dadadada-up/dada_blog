@@ -48,23 +48,23 @@ export default function PostCard({ post }: PostCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <Link href={`/posts/${post.id}`} className="block">
         <div className="p-6">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xl">{categoryEmoji}</span>
-            <h2 className="text-xl font-semibold line-clamp-2 text-gray-800 hover:text-blue-600 transition-colors">
+            <h2 className="text-xl font-semibold line-clamp-2 text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               {post.title}
             </h2>
           </div>
-          <div className="flex items-center text-sm text-gray-500 mb-3">
+          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
             <span className="mr-3">📅 {formattedDate}</span>
             {post.category && (
               <span className="mr-3">🏷️ {post.category}</span>
             )}
           </div>
           {/* 固定高度的摘要区域，确保卡片大小一致 */}
-          <div className="text-gray-600 line-clamp-3 h-18">
+          <div className="text-gray-600 dark:text-gray-300 line-clamp-3 h-18">
             {getExcerpt()}
           </div>
         </div>

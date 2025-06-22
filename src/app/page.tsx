@@ -26,7 +26,7 @@ export default async function Home() {
           {/* 精选文章模块 */}
           <section className="mb-8">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold flex items-center">
+              <h2 className="text-2xl font-bold flex items-center text-gray-900 dark:text-gray-100">
                 <span className="mr-2">⭐</span> 精选文章
               </h2>
             </div>
@@ -37,7 +37,7 @@ export default async function Home() {
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center text-gray-500 dark:text-gray-400">
                 暂无精选文章，请在Notion数据库中将文章的"是否精选文章"字段设置为"是"
               </div>
             )}
@@ -45,12 +45,12 @@ export default async function Home() {
 
           <section>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold flex items-center">
+              <h2 className="text-2xl font-bold flex items-center text-gray-900 dark:text-gray-100">
                 <span className="mr-2">📚</span> 最新文章
               </h2>
               <Link 
                 href="/posts" 
-                className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm flex items-center"
               >
                 全部文章 <span className="ml-1">»</span>
               </Link>
@@ -62,7 +62,7 @@ export default async function Home() {
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center text-gray-500 dark:text-gray-400">
                 暂无文章，请先同步Notion数据
               </div>
             )}

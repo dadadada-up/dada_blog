@@ -5,6 +5,14 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* 深色模式颜色变量 */
+  --background-dark: #0a0a0a;
+  --foreground-dark: #ededed;
+  --card-background: #ffffff;
+  --card-background-dark: #1f2937;
+  --border-color: #e5e7eb;
+  --border-color-dark: #374151;
 }
 
 @theme inline {
@@ -14,11 +22,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* 深色模式样式 */
+.dark {
+  --background: var(--background-dark);
+  --foreground: var(--foreground-dark);
+}
+
+/* 确保深色模式平滑过渡 */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 body {
@@ -90,13 +102,28 @@ pre[class*="language-"] {
   border: 1px solid #e5e7eb;
 }
 
+.dark .prose th {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
 .prose td {
   padding: 0.75rem 1rem;
   border: 1px solid #e5e7eb;
 }
 
+.dark .prose td {
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
 .prose tr:nth-child(even) {
   background-color: #f9fafb;
+}
+
+.dark .prose tr:nth-child(even) {
+  background-color: #1f2937;
 }
 
 /* 引用块样式 */
@@ -108,6 +135,12 @@ pre[class*="language-"] {
   background-color: #f9fafb;
   padding: 1rem;
   border-radius: 0.25rem;
+}
+
+.dark .prose blockquote {
+  background-color: #374151;
+  border-left-color: #60a5fa;
+  color: #f9fafb;
 }
 
 /* 标题链接样式 */
@@ -130,4 +163,21 @@ pre[class*="language-"] {
   margin-left: 0.5rem;
   color: #3b82f6;
   font-weight: normal;
+}
+
+/* Mermaid图表样式 */
+.mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.dark .mermaid-container svg {
+  filter: invert(0.9) hue-rotate(180deg);
+}
+
+.dark .mermaid-container svg .node rect,
+.dark .mermaid-container svg .node circle,
+.dark .mermaid-container svg .node ellipse,
+.dark .mermaid-container svg .node polygon {
+  filter: invert(1) hue-rotate(180deg);
 }
