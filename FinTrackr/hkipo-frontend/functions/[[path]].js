@@ -1,8 +1,14 @@
 // 处理微信域名验证和 SPA 路由
+// 注意：不要拦截 /api/* 路由，让它们被其他函数处理
 export async function onRequest(context) {
-  const { request, env } = context;
+  const { request, env, next } = context;
   const url = new URL(request.url);
   const pathname = url.pathname;
+
+  // 不拦截 API 路由，让其他函数处理
+  if (pathname.startsWith('/api/')) {
+    return next();
+  }
 
   // 微信域名验证文件 - 直接返回验证内容
   if (pathname === '/c337d663edfed4d1d4ca927e87124acd.txt') {
