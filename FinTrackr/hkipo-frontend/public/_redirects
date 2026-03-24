@@ -1,6 +1,0 @@
-# 静态文件直接返回
-/*.txt  /:splat.txt  200
-/*.xml  /:splat.xml  200
-
-# SPA 路由 - 其他所有请求返回 index.html
-/*    /index.html   200
